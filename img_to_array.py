@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 
 
-def extract_curve_y(
+def img_to_array(
     image_path: str,
     num_points: int = 1000,
     threshold: int = 128,
@@ -53,11 +53,39 @@ def extract_curve_y(
     return y_arr
 
 
+def percentiles(y_values: np.ndarray, percentiles: list) -> dict:
+    return {p: float(np.percentile(y_values, p)) for p in percentiles}
+
+
 # --- usage ---
 if __name__ == "__main__":
-    y_values = extract_curve_y(
-        "img/climb_curve.png",
+    y_values = img_to_array(
+        "img/climb.png",
         num_points=25,
     )
     print(y_values.shape)  # -> (1000,)
-    # print(y_values)       # uncomment to dump all 1,000 values
+    print(y_values)  # uncomment to dump all 1,000 values
+
+    # use matplotlib to visualize
+    import matplotlib.pyplot as plt
+
+    plt.plot(y_values)
+    plt.xlabel("x position (sampled)")
+    plt.ylabel("y value (normalized)")
+    plt.title("Extracted Curve Y-Values")
+    # plt.show()
+
+    # smooth the curve into a new array and plot that too
+    from scipy.ndimage import gaussian_filter1d
+
+    smoothed_y = gaussian_filter1d(y_values, sigma=2)
+    plt.plot(smoothed_y, label="Smoothed Curve", color="orange")
+    plt.xlabel("x position (sampled)")
+    plt.ylabel("y value (normalized)")
+    plt.title("Smoothed Curve Y-Values")
+    plt.legend()
+    print("Done extracting and plotting curve y-values.")
+
+    # Find the 10th, 20th, 80th, and 90th percentile y-values from the smoothed_y
+    percentile_ranges = [10, 20, 80, 90]
+    percentile_values = percentiles(smoothed_y, percentile_ranges)
